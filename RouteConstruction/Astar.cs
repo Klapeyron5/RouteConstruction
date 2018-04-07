@@ -290,13 +290,18 @@ namespace RouteConstruction
 					if (flag) researchPoints.AddLast(new ushort[] { X,Y });
 				} else if (pointsInfo[X,Y,0] == 1) //если точка в закрытом списке
                 {
-					Gbuffer = (ushort)(pointsInfo[parentX,parentY,2]+G);
-					if (Gbuffer < pointsInfo[X,Y,2])
-					{
+					Gbuffer = (ushort)(pointsInfo[parentX,parentY,2]+G); //посчитаем G через нового родителя
+					if (Gbuffer < pointsInfo[X,Y,2]) //сравним со старым G. Если G новое меньше старого,
+                    {                                //то присваиваем точке нового, более оптимального родителя
 						pointsInfo[X,Y,1] = (ushort)(pointsInfo[X,Y,1] - pointsInfo[X,Y,2] + Gbuffer);
 						pointsInfo[X,Y,2] = Gbuffer;
-						
-						LinkedListNode<ushort[]> current = researchPoints.First;
+                        pointsInfo[X,Y,3] = parentX;
+                        pointsInfo[X,Y,4] = parentY;
+
+                        //удаляем текущую точку из списка кандитатов на включение в маршрут,
+                        //потому что у нее поменялась метрика и надо ее сдвинуть
+                        //помещаем в список по возрастанию F уже с новым значением
+                        LinkedListNode<ushort[]> current = researchPoints.First;
 						foreach (ushort[] p in researchPoints)
 						{
 							if ((p[0] == X) && (p[1] == Y))
