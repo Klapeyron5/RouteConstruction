@@ -7,3 +7,4 @@ C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteCon
 C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.csproj.GenerateResource.Cache
 C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.exe
 C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.pdb
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.csproj.CoreCompileInputs.cache

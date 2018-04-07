@@ -48,7 +48,7 @@ namespace RouteConstruction
                 {
                     bitmap = new Bitmap(dlg.FileName);
                     clearMap = new Bitmap(bitmap);
-                    preprocessedMap = new MapPreprocessing().getProcessedBitmap(ref bitmap);
+                    preprocessedMap = MapPreprocessing.getProcessedBitmap(ref bitmap);
                     pictureBox1.Image = bitmap;
                     BitmapLoaded = true;
                 }

@@ -20,8 +20,8 @@ namespace RouteConstruction
 
 			mode = m;
 
-            researchPoints.AddFirst(new ushort[2] { startX, startY});
-            route.Add(new ushort[2] { finishX, finishY});
+            researchPoints.AddFirst(new ushort[2] { startX, startY}); //добавляем в точки для исследования первую
+            route.Add(new ushort[2] { finishX, finishY}); //добавляем в маршрут первой точкой финиш (строим маршрут с конца)
 
 			ushort n;
 			switch(m)
@@ -38,7 +38,7 @@ namespace RouteConstruction
 			}
 
 			pointsInfo = new ushort[bmpWidth,bmpHeight,5];
-			for (int i = 0; i < bmpWidth; i++)
+			for (int i = 0; i < bmpWidth; i++) //если точка из штрафной зоны, то добавляем ей штрафы на каждый цвет - свой
 				for (int j = 0; j < bmpHeight; j++)
 				{
 					pointsInfo[i,j,0] = 0;
@@ -54,7 +54,8 @@ namespace RouteConstruction
 					pointsInfo[i,j,4] = 0;
 				}
 
-			pointsInfo[startX,startY,0] = 1;
+			pointsInfo[startX,startY,0] = 1; //говорим, что старт уже в закрытом списке (т.е. мы уже решили добавлять его в маршрут
+                                             //или нет (добавлять, конечно))
 		}
 		
 		byte mode;
@@ -67,15 +68,43 @@ namespace RouteConstruction
         private ushort startY;
         private ushort finishX;
         private ushort finishY;
+
+        /// <summary>
+        /// Итоговый маршрут
+        /// </summary>
         private List<ushort[]> route = new List<ushort[]>();
         
-        private ushort[,,] pointsInfo; //[x,y,k]; k = 0-closed; 1-F; 2-G; 3-parentX; 4-parentY; (mode 2: 5-sit at researchPoints;)
+        /// <summary>
+        /// Информация о точках: pointsInfo[x,y,k];
+        /// k = 
+        /// 0 - находится в закрытом списке (0 или 1);
+        /// 1 - F метрика: общая метрика = G + |x-finishX| + |y-finishY| + имеющиеся штрафы на перемещение;
+        /// 2 - G метрика: 10*кол-во прямых элем. путей + 14*кол-во диагональных элем. путей (элем. путь - соединяет две соседние клетки);
+        /// 3 - parentX;
+        /// 4 - parentY;
+        /// (mode 2: 5-sit at researchPoints;)
+        /// </summary>
+        private ushort[,,] pointsInfo;
+
+        /// <summary>
+        /// Точки - кандидаты для включения в маршрут.
+        /// </summary>
 		private LinkedList<ushort[]> researchPoints = new LinkedList<ushort[]>();
+
+        /// <summary>
+        /// True, если в researchPoints попала финишная точка.
+        /// </summary>
         private bool FinishHasReached = false;
+
         private bool flag = true;
 		private ushort G;
 		private ushort Gbuffer;
 
+        /// <summary>
+        /// Возвращает маршрут от старта до финиша (заданных через конструктор)
+        /// Или пишет, что невозможно достигнуть финиша.
+        /// </summary>
+        /// <returns></returns>
 		public List<ushort[]> getRoute()
 		{
 				switch(mode)
@@ -157,6 +186,10 @@ namespace RouteConstruction
 			}
 		}
 
+        /// <summary>
+        /// Рассчитывает путь с возможностью движения по направлениям, кратным pi/4.
+        /// </summary>
+        /// <returns></returns>
 		private List<ushort[]> getNPiIn4Route()
         {
 			Console.WriteLine("getNPiIn4Route");
@@ -174,6 +207,7 @@ namespace RouteConstruction
 				//для каждой, что уже в открытом, проверяем не короче ли путь к ней через текущую (сморим только на G)
 				//если так, то меняем родителя и обновляем веса, удаляем и заново добавляем ее в LinkedList
 
+                //проверяем все 8 точек, окружающих текущую
 				ushort p1 = (ushort)(X+1);
 				ushort p2 = (ushort)(Y+1);
 				getNPiIn4RouteRepeatedCodeNormal(ref p1,ref Y,ref X,ref Y);
@@ -189,9 +223,9 @@ namespace RouteConstruction
 				getNPiIn4RouteRepeatedCodeDiagonal(ref p1,ref p2,ref X,ref Y);
 			}
 
-			if (FinishHasReached)
-			{
-				X = route[route.Count - 1][0];
+			if (FinishHasReached)   //если был достигнут финиш, то идем с финиша к родителю,   
+            {                       //затем от родителя финиша к его родителю и т.д. до конца списка
+                X = route[route.Count - 1][0];
 				Y = route[route.Count - 1][1];
 				while (!((X == startX) && (Y == startY)))
 				{
@@ -201,7 +235,7 @@ namespace RouteConstruction
 				}
 				route.Reverse();
 			}
-			else MessageBox.Show("Robot can not reach the target.");
+			else MessageBox.Show("Robot can not reach the target."); //Финиш закрыт препятствиями
 
 			return route;
         }
@@ -221,13 +255,21 @@ namespace RouteConstruction
 				getNPiIn4RouteRepeatedCode(ref X,ref Y,ref parentX,ref parentY,ref G);
 		}
 
+        /// <summary>
+        /// Добавляет точку (X,Y) в список кандидатов на включение в маршрут в порядке возрастания метрики F
+        /// </summary>
+        /// <param name="X"></param>
+        /// <param name="Y"></param>
+        /// <param name="parentX"></param>
+        /// <param name="parentY"></param>
+        /// <param name="G"></param>
 		private void getNPiIn4RouteRepeatedCode(ref ushort X,ref ushort Y,ref ushort parentX,ref ushort parentY, ref ushort G)
 		{
-			if (!((X == finishX) && (Y == finishY)))
-			{
-				if (pointsInfo[X,Y,0] == 0)
-				{
-					pointsInfo[X,Y,0] = 1;
+			if (!((X == finishX) && (Y == finishY))) //если рассматриваемая точка не финиш
+            { 
+                if (pointsInfo[X,Y,0] == 0)     //если точка не в закрытом списке, то добавляем точку(X, Y) в список
+                {                               //кандидатов на включение в маршрут в порядке возрастания метрики F
+                    pointsInfo[X,Y,0] = 1; //говорим, что теперь она в закрытом списке
 					pointsInfo[X,Y,3] = parentX;
 					pointsInfo[X,Y,4] = parentY;
 					pointsInfo[X,Y,2] = (ushort)(pointsInfo[parentX,parentY,2] + G);
@@ -246,8 +288,8 @@ namespace RouteConstruction
 						current = current.Next;
 					}
 					if (flag) researchPoints.AddLast(new ushort[] { X,Y });
-				} else if (pointsInfo[X,Y,0] == 1)
-				{
+				} else if (pointsInfo[X,Y,0] == 1) //если точка в закрытом списке
+                {
 					Gbuffer = (ushort)(pointsInfo[parentX,parentY,2]+G);
 					if (Gbuffer < pointsInfo[X,Y,2])
 					{
@@ -276,7 +318,7 @@ namespace RouteConstruction
 						}
 					}
 				}
-			} else if ((X == finishX) && (Y == finishY))
+			} else if ((X == finishX) && (Y == finishY)) //если рассматриваемая точка - финиш
 			{
 				pointsInfo[X,Y,0] = 1;
 				pointsInfo[X,Y,3] = parentX;
@@ -296,24 +338,36 @@ namespace RouteConstruction
 		}
 	}
 
-    class MapPreprocessing
+
+    /// <summary>
+    /// Рисует вокруг каждой белой точки белый квадрат со стороной 2robotRadius+1,
+    /// затем добавляет вокруг квадрата штрафные зоны (такие же квадраты, только длина стороны+2, следующая зона еще+2 и т.д.)
+    /// попиксельно с разными цветами.</summary>
+    static class MapPreprocessing
     {
-        public MapPreprocessing()
+        static MapPreprocessing()
         {
             for (int k = rPenalty; k >= 0; k--)
-                radiuses[rPenalty - k] = rRobot + k;
+                radiuses[rPenalty - k] = rRobot + k; //[9,8,7,6]
         }
 
-        private static int rRobot = Form1.robotRadius;
+        private static int rRobot = Form1.robotRadius; //6
         private static int rPenalty = 3;
-        private static int[] radiuses = new int[rPenalty+1];
+        private static int[] radiuses = new int[rPenalty+1]; //6+3 (1.5 robotRadius)
 
         public static Color wallColor = Color.FromArgb(255, 255, 255);
         private static int penaltyColorRedStep = 70;
+
+        //норм, не очень, совсем не очень, стена
         public static Color[] colors = { Color.FromArgb(penaltyColorRedStep * 3, 200, 0),
             Color.FromArgb(penaltyColorRedStep*2,200,0),Color.FromArgb(penaltyColorRedStep*1,200,0),wallColor};
 
-        public Bitmap getProcessedBitmap(ref Bitmap bitmap)
+        /// <summary>
+        /// Возвращает битмап, где отмечены зоны для езды робота, включая штрафные.
+        /// </summary>
+        /// <param name="bitmap">Ссылка на битмап - карту помещения.</param>
+        /// <returns></returns>
+        public static Bitmap getProcessedBitmap(ref Bitmap bitmap)
         {
             Bitmap bmp = new Bitmap(bitmap);
             Graphics graphics = Graphics.FromImage(bmp);
