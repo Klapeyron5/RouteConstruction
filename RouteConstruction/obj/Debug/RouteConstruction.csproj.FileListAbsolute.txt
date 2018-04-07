@@ -1,0 +1,9 @@
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\bin\Debug\RouteConstruction.exe.config
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\bin\Debug\RouteConstruction.exe
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\bin\Debug\RouteConstruction.pdb
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.csprojResolveAssemblyReference.cache
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.Form1.resources
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.Properties.Resources.resources
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.csproj.GenerateResource.Cache
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.exe
+C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\RouteConstruction\RouteConstruction\obj\Debug\RouteConstruction.pdb
