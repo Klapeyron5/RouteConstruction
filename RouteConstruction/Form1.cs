@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Drawing.Drawing2D;
 
 namespace RouteConstruction
 {
@@ -49,7 +50,8 @@ namespace RouteConstruction
                     bitmap = new Bitmap(dlg.FileName);
                     clearMap = new Bitmap(bitmap);
                     preprocessedMap = MapPreprocessing.getProcessedBitmap(ref bitmap);
-                    pictureBox1.Image = bitmap;
+                    
+                    drawBitmapOnPictureBox(bitmap);
                     BitmapLoaded = true;
                 }
             }
@@ -70,8 +72,8 @@ namespace RouteConstruction
                         startX = (ushort)(e.X * bitmap.Width / pictureBox1.Size.Width);
                         startY = (ushort)(e.Y * bitmap.Height / pictureBox1.Size.Height);
 						Console.WriteLine("Start "+startX+", "+startY);
-                        graphics.FillEllipse(brush, startX - robotRadius, startY - robotRadius, 2 * robotRadius, 2 * robotRadius);
-                        pictureBox1.Image = bitmap;
+                        //    graphics.FillEllipse(brush, startX - robotRadius, startY - robotRadius, 2 * robotRadius, 2 * robotRadius);
+                        drawBitmapOnPictureBox(bitmap);
                         RouteConstructed = false;
                     }
                     else
@@ -85,14 +87,30 @@ namespace RouteConstruction
                             bitmap.SetPixel(route[i][0], route[i][1], routeColor);
                         SolidBrush brush = new SolidBrush(finishColor);
                         Graphics graphics = Graphics.FromImage(bitmap);
-                        graphics.FillEllipse(brush, finishX - robotRadius, finishY - robotRadius, 2 * robotRadius, 2 * robotRadius);
-                        pictureBox1.Image = bitmap;
+                        //    graphics.FillEllipse(brush, finishX - robotRadius, finishY - robotRadius, 2 * robotRadius, 2 * robotRadius);
+                        astar.printMap();
+                        astar.printRoute();
+
+                        drawBitmapOnPictureBox(bitmap);
                         RouteConstructed = true;
                     }
                 }
             }
             catch (Exception ex) {}
             finally { }
+        }
+
+        private void drawBitmapOnPictureBox(Bitmap bmp)
+        {
+            float zoom = 12.0f;
+            Bitmap zoomed = new Bitmap((int)(bmp.Width * zoom), (int)(bmp.Height * zoom));
+
+            using (Graphics g = Graphics.FromImage(zoomed))
+            {
+                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.DrawImage(bmp, new Rectangle(Point.Empty, zoomed.Size));
+            }
+            pictureBox1.Image = zoomed;
         }
     }
 }

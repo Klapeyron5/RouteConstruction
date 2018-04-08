@@ -18,52 +18,52 @@ namespace RouteConstruction
             finishX = finishx;
             finishY = finishy;
 
-			mode = m;
+            mode = m;
 
-            researchPoints.AddFirst(new ushort[2] { startX, startY}); //добавляем в точки для исследования первую
-            route.Add(new ushort[2] { finishX, finishY}); //добавляем в маршрут первой точкой финиш (строим маршрут с конца)
+            researchPoints.AddFirst(new ushort[2] { startX, startY }); //добавляем в точки для исследования первую
+            route.Add(new ushort[2] { finishX, finishY }); //добавляем в маршрут первой точкой финиш (строим маршрут с конца)
 
-			ushort n;
-			switch(m)
-			{
-				case 1:
-					n = 1;
-					break;
-				case 2:
-					n = 10;
-					break;
-				default:
-					n = 1;
-					break;
-			}
+            ushort n;
+            switch (m)
+            {
+                case 1:
+                    n = 1;
+                    break;
+                case 2:
+                    n = 10;
+                    break;
+                default:
+                    n = 1;
+                    break;
+            }
 
-			pointsInfo = new ushort[bmpWidth,bmpHeight,5];
-			for (int i = 0; i < bmpWidth; i++) //если точка из штрафной зоны, то добавляем ей штрафы на каждый цвет - свой
-				for (int j = 0; j < bmpHeight; j++)
-				{
-					pointsInfo[i,j,0] = 0;
-					if (bitmap.GetPixel(i,j) == MapPreprocessing.colors[2])
-						pointsInfo[i,j,1] = (ushort)(14*n);
-					else if (bitmap.GetPixel(i,j) == MapPreprocessing.colors[1])
-						pointsInfo[i,j,1] = (ushort)(12*n);
-					else if (bitmap.GetPixel(i,j) == MapPreprocessing.colors[0])
-						pointsInfo[i,j,1] = (ushort)(10*n);
-					else pointsInfo[i,j,1] = 0;
-					pointsInfo[i,j,2] = 0;
-					pointsInfo[i,j,3] = 0;
-					pointsInfo[i,j,4] = 0;
-				}
+            pointsInfo = new ushort[bmpWidth, bmpHeight, 5];
+            for (int i = 0; i < bmpWidth; i++) //если точка из штрафной зоны, то добавляем ей штрафы на каждый цвет - свой
+                for (int j = 0; j < bmpHeight; j++)
+                {
+                    pointsInfo[i, j, 0] = 0;
+                    if (bitmap.GetPixel(i, j) == MapPreprocessing.colors[2])
+                        pointsInfo[i, j, 1] = (ushort)(14 * n);
+                    else if (bitmap.GetPixel(i, j) == MapPreprocessing.colors[1])
+                        pointsInfo[i, j, 1] = (ushort)(12 * n);
+                    else if (bitmap.GetPixel(i, j) == MapPreprocessing.colors[0])
+                        pointsInfo[i, j, 1] = (ushort)(10 * n);
+                    else pointsInfo[i, j, 1] = 0;
+                    pointsInfo[i, j, 2] = 0;
+                    pointsInfo[i, j, 3] = 0;
+                    pointsInfo[i, j, 4] = 0;
+                }
 
-			pointsInfo[startX,startY,0] = 1; //говорим, что старт уже в закрытом списке (т.е. мы уже решили добавлять его в маршрут
-                                             //или нет (добавлять, конечно))
-		}
-		
-		byte mode;
+            pointsInfo[startX, startY, 0] = 1; //говорим, что старт уже в закрытом списке (т.е. мы уже решили добавлять его в маршрут
+                                               //или нет (добавлять, конечно))
+        }
+
+        byte mode;
 
         private Bitmap bitmap;
         private int bmpWidth; //TODO: short Exception
         private int bmpHeight;
-        
+
         private ushort startX;
         private ushort startY;
         private ushort finishX;
@@ -73,12 +73,12 @@ namespace RouteConstruction
         /// Итоговый маршрут
         /// </summary>
         private List<ushort[]> route = new List<ushort[]>();
-        
+
         /// <summary>
         /// Информация о точках: pointsInfo[x,y,k];
         /// k = 
         /// 0 - находится в закрытом списке (0 или 1);
-        /// 1 - F метрика: общая метрика = G + |x-finishX| + |y-finishY| + имеющиеся штрафы на перемещение;
+        /// 1 - F метрика: общая метрика = G + |x-finishX| + |y-finishY| + имеющиеся штрафы на перемещение + штраф за излом;
         /// 2 - G метрика: 10*кол-во прямых элем. путей + 14*кол-во диагональных элем. путей (элем. путь - соединяет две соседние клетки);
         /// 3 - parentX;
         /// 4 - parentY;
@@ -97,8 +97,9 @@ namespace RouteConstruction
         private bool FinishHasReached = false;
 
         private bool flag = true;
-		private ushort G;
-		private ushort Gbuffer;
+        private ushort G;
+        private ushort Gbuffer;
+        private const ushort breakPenalty = 10;
 
         /// <summary>
         /// Возвращает маршрут от старта до финиша (заданных через конструктор)
@@ -106,34 +107,34 @@ namespace RouteConstruction
         /// </summary>
         /// <returns></returns>
 		public List<ushort[]> getRoute()
-		{
-				switch(mode)
-				{
-					case 1:
-						return getNPiIn2Route();
-					case 2:
-						return getNPiIn4Route();
-					default:
-						return getNPiIn4Route();
-				}
-		}
+        {
+            switch (mode)
+            {
+                case 1:
+                    return getNPiIn2Route();
+                case 2:
+                    return getNPiIn4Route();
+                default:
+                    return getNPiIn4Route();
+            }
+        }
 
         private List<ushort[]> getNPiIn2Route()
         {
             ushort X, Y;
-            while((researchPoints.Count!=0)&&(!FinishHasReached))
+            while ((researchPoints.Count != 0) && (!FinishHasReached))
             {
                 X = researchPoints.First.Value[0];
                 Y = researchPoints.First.Value[1];
                 researchPoints.RemoveFirst();
-				ushort p = (ushort)(X+1);
-				getNPiIn2RouteRepeatedCode(ref p, ref Y, ref X, ref Y);
-				p = (ushort)(X-1);
-				getNPiIn2RouteRepeatedCode(ref p, ref Y, ref X, ref Y);
-				p = (ushort)(Y+1);
-				getNPiIn2RouteRepeatedCode(ref X, ref p, ref X, ref Y);
-				p = (ushort)(Y-1);
-				getNPiIn2RouteRepeatedCode(ref X, ref p, ref X, ref Y);
+                ushort p = (ushort)(X + 1);
+                getNPiIn2RouteRepeatedCode(ref p, ref Y, ref X, ref Y);
+                p = (ushort)(X - 1);
+                getNPiIn2RouteRepeatedCode(ref p, ref Y, ref X, ref Y);
+                p = (ushort)(Y + 1);
+                getNPiIn2RouteRepeatedCode(ref X, ref p, ref X, ref Y);
+                p = (ushort)(Y - 1);
+                getNPiIn2RouteRepeatedCode(ref X, ref p, ref X, ref Y);
             }
 
             if (FinishHasReached)
@@ -149,42 +150,43 @@ namespace RouteConstruction
                 route.Reverse();
             }
             else MessageBox.Show("Robot can not reach the target.");
-            
+
             return route;
         }
 
         private void getNPiIn2RouteRepeatedCode(ref ushort X, ref ushort Y, ref ushort parentX, ref ushort parentY)
         {
-            if ((bitmap.GetPixel(X,Y)!=MapPreprocessing.wallColor)&&
-                    (pointsInfo[X,Y,0]==0)&&(!((X==finishX)&&(Y==finishY))))
-			{
-				pointsInfo[X,Y,0] = 1;
-				pointsInfo[X,Y,3] = parentX;
-				pointsInfo[X,Y,4] = parentY;
-				pointsInfo[X,Y,2] = (ushort)(pointsInfo[parentX,parentY,2]+1);
-				pointsInfo[X,Y,1] += (ushort)(pointsInfo[X,Y,2]+Math.Abs(X-finishX)+Math.Abs(Y-finishY));
+            if ((bitmap.GetPixel(X, Y) != MapPreprocessing.wallColor) &&
+                    (pointsInfo[X, Y, 0] == 0) && (!((X == finishX) && (Y == finishY))))
+            {
+                pointsInfo[X, Y, 0] = 1;
+                pointsInfo[X, Y, 3] = parentX;
+                pointsInfo[X, Y, 4] = parentY;
+                pointsInfo[X, Y, 2] = (ushort)(pointsInfo[parentX, parentY, 2] + 1);
+                pointsInfo[X, Y, 1] += (ushort)(pointsInfo[X, Y, 2] + Math.Abs(X - finishX) + Math.Abs(Y - finishY));
 
-				flag=true;
-				LinkedListNode<ushort[]> current = researchPoints.First;
-				foreach (ushort[] p in researchPoints)
-				{
-					if (pointsInfo[X,Y,1]<pointsInfo[p[0],p[1],1])
-					{
-						researchPoints.AddBefore(current, new ushort[] {X,Y});
-						flag=false;
-						break;
-					}
-					current=current.Next;
-				}
-				if (flag) researchPoints.AddLast(new ushort[] {X,Y});
-			} else if ((X==finishX)&&(Y==finishY))
-			{
-				pointsInfo[X,Y,0]=1;
-				pointsInfo[X,Y,3]=parentX;
-				pointsInfo[X,Y,4]=parentY;
-				FinishHasReached=true;
-			}
-		}
+                flag = true;
+                LinkedListNode<ushort[]> current = researchPoints.First;
+                foreach (ushort[] p in researchPoints)
+                {
+                    if (pointsInfo[X, Y, 1] < pointsInfo[p[0], p[1], 1])
+                    {
+                        researchPoints.AddBefore(current, new ushort[] { X, Y });
+                        flag = false;
+                        break;
+                    }
+                    current = current.Next;
+                }
+                if (flag) researchPoints.AddLast(new ushort[] { X, Y });
+            }
+            else if ((X == finishX) && (Y == finishY))
+            {
+                pointsInfo[X, Y, 0] = 1;
+                pointsInfo[X, Y, 3] = parentX;
+                pointsInfo[X, Y, 4] = parentY;
+                FinishHasReached = true;
+            }
+        }
 
         /// <summary>
         /// Рассчитывает путь с возможностью движения по направлениям, кратным pi/4.
@@ -192,68 +194,69 @@ namespace RouteConstruction
         /// <returns></returns>
 		private List<ushort[]> getNPiIn4Route()
         {
-			Console.WriteLine("getNPiIn4Route");
+            Console.WriteLine("getNPiIn4Route");
             ushort X, Y;
-            while((researchPoints.Count != 0) && (!FinishHasReached))
+            while ((researchPoints.Count != 0) && (!FinishHasReached))
             {
                 X = researchPoints.First.Value[0];
                 Y = researchPoints.First.Value[1];
                 researchPoints.RemoveFirst();
-				pointsInfo[X,Y,0] = 2;
-				//открываем квадрат
-				//для каждой точки квадрата (от минимальной):
-				//добавляем ее в закрытый
-				//добавляем в открытый те, которые еще не в открытом (с текущим родителем)
-				//для каждой, что уже в открытом, проверяем не короче ли путь к ней через текущую (сморим только на G)
-				//если так, то меняем родителя и обновляем веса, удаляем и заново добавляем ее в LinkedList
+                pointsInfo[X, Y, 0] = 2;
+                //открываем квадрат
+                //для каждой точки квадрата (от минимальной):
+                //добавляем ее в закрытый
+                //добавляем в открытый те, которые еще не в открытом (с текущим родителем)
+                //для каждой, что уже в открытом, проверяем не короче ли путь к ней через текущую (сморим только на G)
+                //если так, то меняем родителя и обновляем веса, удаляем и заново добавляем ее в LinkedList
 
                 //проверяем все 8 точек, окружающих текущую
-				ushort p1 = (ushort)(X+1);
-				ushort p2 = (ushort)(Y+1);
-				getNPiIn4RouteRepeatedCodeNormal(ref p1,ref Y,ref X,ref Y);
-				getNPiIn4RouteRepeatedCodeDiagonal(ref p1,ref p2,ref X,ref Y);
-				getNPiIn4RouteRepeatedCodeNormal(ref X,ref p2,ref X,ref Y);
-				p1 = (ushort)(X-1);
-				getNPiIn4RouteRepeatedCodeNormal(ref p1,ref Y,ref X,ref Y);
-				getNPiIn4RouteRepeatedCodeDiagonal(ref p1,ref p2,ref X,ref Y);
-				p2 = (ushort)(Y-1);
-				getNPiIn4RouteRepeatedCodeNormal(ref X,ref p2,ref X,ref Y);
-				getNPiIn4RouteRepeatedCodeDiagonal(ref p1,ref p2,ref X,ref Y);
-				p1 = (ushort)(X+1);
-				getNPiIn4RouteRepeatedCodeDiagonal(ref p1,ref p2,ref X,ref Y);
-			}
+                ushort p1 = (ushort)(X + 1);
+                ushort p2 = (ushort)(Y + 1);
+                getNPiIn4RouteRepeatedCodeNormal(ref p1, ref Y, ref X, ref Y);
+                getNPiIn4RouteRepeatedCodeDiagonal(ref p1, ref p2, ref X, ref Y);
+                getNPiIn4RouteRepeatedCodeNormal(ref X, ref p2, ref X, ref Y);
+                p1 = (ushort)(X - 1);
+                getNPiIn4RouteRepeatedCodeNormal(ref p1, ref Y, ref X, ref Y);
+                getNPiIn4RouteRepeatedCodeDiagonal(ref p1, ref p2, ref X, ref Y);
+                p2 = (ushort)(Y - 1);
+                getNPiIn4RouteRepeatedCodeNormal(ref X, ref p2, ref X, ref Y);
+                getNPiIn4RouteRepeatedCodeDiagonal(ref p1, ref p2, ref X, ref Y);
+                p1 = (ushort)(X + 1);
+                getNPiIn4RouteRepeatedCodeDiagonal(ref p1, ref p2, ref X, ref Y);
+            }
 
-			if (FinishHasReached)   //если был достигнут финиш, то идем с финиша к родителю,   
+            if (FinishHasReached)   //если был достигнут финиш, то идем с финиша к родителю,   
             {                       //затем от родителя финиша к его родителю и т.д. до конца списка
                 X = route[route.Count - 1][0];
-				Y = route[route.Count - 1][1];
-				while (!((X == startX) && (Y == startY)))
-				{
-					route.Add(new ushort[2] { pointsInfo[X,Y,3],pointsInfo[X,Y,4] });
-					X = route[route.Count - 1][0];
-					Y = route[route.Count - 1][1];
-				}
-				route.Reverse();
-			}
-			else MessageBox.Show("Robot can not reach the target."); //Финиш закрыт препятствиями
+                Y = route[route.Count - 1][1];
+                while (!((X == startX) && (Y == startY)))
+                {
+                    route.Add(new ushort[2] { pointsInfo[X, Y, 3], pointsInfo[X, Y, 4] });
+                    X = route[route.Count - 1][0];
+                    Y = route[route.Count - 1][1];
+                }
+                route.Reverse();
+            }
+            else MessageBox.Show("Robot can not reach the target."); //Финиш закрыт препятствиями
 
-			return route;
+            return route;
         }
 
-		private void getNPiIn4RouteRepeatedCodeNormal(ref ushort X, ref ushort Y, ref ushort parentX, ref ushort parentY)
-		{
-			G = 10;
-			if (bitmap.GetPixel(X,Y)!=MapPreprocessing.wallColor)
-				getNPiIn4RouteRepeatedCode(ref X,ref Y,ref parentX,ref parentY,ref G);
-		}
+        private void getNPiIn4RouteRepeatedCodeNormal(ref ushort X, ref ushort Y, ref ushort parentX, ref ushort parentY)
+        {
+            G = 10;
+            if (bitmap.GetPixel(X, Y) != MapPreprocessing.wallColor)
+                getNPiIn4RouteRepeatedCode(ref X, ref Y, ref parentX, ref parentY, ref G);
+        }
 
-		private void getNPiIn4RouteRepeatedCodeDiagonal(ref ushort X,ref ushort Y,ref ushort parentX,ref ushort parentY)
-		{
-			G = 14;
-			if ((bitmap.GetPixel(X,parentY) != MapPreprocessing.wallColor) &&
-				(bitmap.GetPixel(parentX,Y) != MapPreprocessing.wallColor))
-				getNPiIn4RouteRepeatedCode(ref X,ref Y,ref parentX,ref parentY,ref G);
-		}
+        private void getNPiIn4RouteRepeatedCodeDiagonal(ref ushort X, ref ushort Y, ref ushort parentX, ref ushort parentY)
+        {
+            G = 14;
+            if ((bitmap.GetPixel(X, Y) != MapPreprocessing.wallColor) &&
+                (bitmap.GetPixel(X, parentY) != MapPreprocessing.wallColor) &&
+                (bitmap.GetPixel(parentX, Y) != MapPreprocessing.wallColor))
+                getNPiIn4RouteRepeatedCode(ref X, ref Y, ref parentX, ref parentY, ref G);
+        }
 
         /// <summary>
         /// Добавляет точку (X,Y) в список кандидатов на включение в маршрут в порядке возрастания метрики F
@@ -263,85 +266,115 @@ namespace RouteConstruction
         /// <param name="parentX"></param>
         /// <param name="parentY"></param>
         /// <param name="G"></param>
-		private void getNPiIn4RouteRepeatedCode(ref ushort X,ref ushort Y,ref ushort parentX,ref ushort parentY, ref ushort G)
-		{
-			if (!((X == finishX) && (Y == finishY))) //если рассматриваемая точка не финиш
-            { 
-                if (pointsInfo[X,Y,0] == 0)     //если точка не в закрытом списке, то добавляем точку(X, Y) в список
+		private void getNPiIn4RouteRepeatedCode(ref ushort X, ref ushort Y, ref ushort parentX, ref ushort parentY, ref ushort G)
+        {
+            if (!((X == finishX) && (Y == finishY))) //если рассматриваемая точка не финиш
+            {
+                if (pointsInfo[X, Y, 0] == 0)     //если точка не в закрытом списке, то добавляем точку(X, Y) в список
                 {                               //кандидатов на включение в маршрут в порядке возрастания метрики F
-                    pointsInfo[X,Y,0] = 1; //говорим, что теперь она в закрытом списке
-					pointsInfo[X,Y,3] = parentX;
-					pointsInfo[X,Y,4] = parentY;
-					pointsInfo[X,Y,2] = (ushort)(pointsInfo[parentX,parentY,2] + G);
-					pointsInfo[X,Y,1] += (ushort)(pointsInfo[X,Y,2] + Math.Abs(X - finishX) + Math.Abs(Y - finishY));
+                    pointsInfo[X, Y, 0] = 1; //говорим, что теперь она в закрытом списке
+                    pointsInfo[X, Y, 3] = parentX;
+                    pointsInfo[X, Y, 4] = parentY;
+                    pointsInfo[X, Y, 2] = (ushort)(pointsInfo[parentX, parentY, 2] + G);// +
+                                                                                        //     breakPenalty * isBreak(ref X, ref Y, ref parentX, ref parentY,
+                                                                                        //     ref pointsInfo[parentX, parentY, 3], ref pointsInfo[parentX, parentY, 4]));
+                    pointsInfo[X, Y, 1] += (ushort)(pointsInfo[X, Y, 2] + Math.Abs(X - finishX) + Math.Abs(Y - finishY));
 
-					flag = true;
-					LinkedListNode<ushort[]> current = researchPoints.First;
-					foreach (ushort[] p in researchPoints)
-					{
-						if (pointsInfo[X,Y,1] < pointsInfo[p[0],p[1],1])
-						{
-							researchPoints.AddBefore(current,new ushort[] { X,Y });
-							flag = false;
-							break;
-						}
-						current = current.Next;
-					}
-					if (flag) researchPoints.AddLast(new ushort[] { X,Y });
-				} else if (pointsInfo[X,Y,0] == 1) //если точка в закрытом списке
+                    flag = true;
+                    LinkedListNode<ushort[]> current = researchPoints.First;
+                    foreach (ushort[] p in researchPoints)
+                    {
+                        if (pointsInfo[X, Y, 1] < pointsInfo[p[0], p[1], 1])
+                        {
+                            researchPoints.AddBefore(current, new ushort[] { X, Y });
+                            flag = false;
+                            break;
+                        }
+                        current = current.Next;
+                    }
+                    if (flag) researchPoints.AddLast(new ushort[] { X, Y });
+                }
+                else if (pointsInfo[X, Y, 0] == 1) //если точка в закрытом списке
                 {
-					Gbuffer = (ushort)(pointsInfo[parentX,parentY,2]+G); //посчитаем G через нового родителя
-					if (Gbuffer < pointsInfo[X,Y,2]) //сравним со старым G. Если G новое меньше старого,
+                    Gbuffer = (ushort)(pointsInfo[parentX, parentY, 2] + G);// + //посчитаем G через нового родителя
+                                                                            //       breakPenalty * isBreak(ref X, ref Y, ref parentX, ref parentY,
+                                                                            //       ref pointsInfo[parentX, parentY, 3], ref pointsInfo[parentX, parentY, 4]));
+                    if (Gbuffer < pointsInfo[X, Y, 2]) //сравним со старым G. Если G новое меньше старого,
                     {                                //то присваиваем точке нового, более оптимального родителя
-						pointsInfo[X,Y,1] = (ushort)(pointsInfo[X,Y,1] - pointsInfo[X,Y,2] + Gbuffer);
-						pointsInfo[X,Y,2] = Gbuffer;
-                        pointsInfo[X,Y,3] = parentX;
-                        pointsInfo[X,Y,4] = parentY;
+                        pointsInfo[X, Y, 1] = (ushort)(pointsInfo[X, Y, 1] - pointsInfo[X, Y, 2] + Gbuffer);
+                        pointsInfo[X, Y, 2] = Gbuffer;
+                        pointsInfo[X, Y, 3] = parentX;
+                        pointsInfo[X, Y, 4] = parentY;
 
                         //удаляем текущую точку из списка кандитатов на включение в маршрут,
                         //потому что у нее поменялась метрика и надо ее сдвинуть
                         //помещаем в список по возрастанию F уже с новым значением
                         LinkedListNode<ushort[]> current = researchPoints.First;
-						foreach (ushort[] p in researchPoints)
-						{
-							if ((p[0] == X) && (p[1] == Y))
-							{
-								researchPoints.Remove(current);
-								break;
-							}
-							current = current.Next;
-						}
-						current = researchPoints.First;
-						foreach (ushort[] p in researchPoints)
-						{
-							if (pointsInfo[X,Y,1] < pointsInfo[p[0],p[1],1])
-							{
-								researchPoints.AddBefore(current,new ushort[] { X,Y });
-								break;
-							}
-							current = current.Next;
-						}
-					}
-				}
-			} else if ((X == finishX) && (Y == finishY)) //если рассматриваемая точка - финиш
-			{
-				pointsInfo[X,Y,0] = 1;
-				pointsInfo[X,Y,3] = parentX;
-				pointsInfo[X,Y,4] = parentY;
-				FinishHasReached = true;
-			}
-		}
+                        foreach (ushort[] p in researchPoints)
+                        {
+                            if ((p[0] == X) && (p[1] == Y))
+                            {
+                                researchPoints.Remove(current);
+                                break;
+                            }
+                            current = current.Next;
+                        }
+                        current = researchPoints.First;
+                        foreach (ushort[] p in researchPoints)
+                        {
+                            if (pointsInfo[X, Y, 1] < pointsInfo[p[0], p[1], 1])
+                            {
+                                researchPoints.AddBefore(current, new ushort[] { X, Y });
+                                break;
+                            }
+                            current = current.Next;
+                        }
+                    }
+                }
+            }
+            else if ((X == finishX) && (Y == finishY)) //если рассматриваемая точка - финиш
+            {
+                pointsInfo[X, Y, 0] = 1;
+                pointsInfo[X, Y, 3] = parentX;
+                pointsInfo[X, Y, 4] = parentY;
+                FinishHasReached = true;
+            }
+        }
 
-		public void printMap()
-		{
-			for (int j = 0; j<bmpHeight; j++)
-			{
-				for (int i = 0; i<bmpWidth; i++)
-					Console.Write("\t"+pointsInfo[i, j, 1]);
-				Console.WriteLine();
-			}
-		}
-	}
+        private byte isBreak(ref ushort currentX, ref ushort currentY, ref ushort parentX, ref ushort parentY,
+            ref ushort grandX, ref ushort grandY)
+        {
+            if (((currentX == parentX) && (parentX == grandX) ||
+                ((Math.Abs(currentX - parentX) == 1) && (parentX - grandX == currentX - parentX))) &&
+                (Math.Abs(currentY - parentY) == 1) && (parentY - grandY == currentY - parentY))
+                return 0;
+            if (((currentY == parentY) && (parentY == grandY) ||
+                ((Math.Abs(currentY - parentY) == 1) && (parentY - grandY == currentY - parentY))) &&
+                (Math.Abs(currentX - parentX) == 1) && (parentX - grandX == currentX - parentX))
+                return 0;
+            return 1;
+        }
+
+        public void printMap()
+        {
+            for (int j = 0; j < bmpHeight; j++)
+            {
+                for (int i = 0; i < bmpWidth; i++)
+                    Console.Write("\t" + pointsInfo[i, j, 1]);
+                Console.WriteLine();
+            }
+        }
+
+        public void printRoute()
+        {
+            Console.WriteLine("ROUTE");
+            for (int j = 0; j < route.Count; j++)
+            {
+                Console.WriteLine(route[j][0] + "," + route[j][1]);
+            }
+            Console.WriteLine("ROUTE ends");
+        }
+    }
 
 
     /// <summary>
@@ -387,8 +420,9 @@ namespace RouteConstruction
                                 i - radiuses[k], j - radiuses[k], 2 * radiuses[k] + 1, 2 * radiuses[k] + 1);
                         }
             }
-	//		bmp.Save(@"C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\preprocessed.bmp");
-			return bmp;
+            //		bmp.Save(@"C:\Adocuments\Library\Clapeyron_ind\task3 построение пути\preprocessed.bmp");
+            //return bmp;
+            return bitmap;
         }
     }
 }
